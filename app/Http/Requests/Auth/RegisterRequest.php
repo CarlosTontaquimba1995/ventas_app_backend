@@ -19,6 +19,7 @@ class RegisterRequest extends BaseRequest
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'phone' => ['nullable', 'string', 'max:20'],
+            'address' => ['nullable', 'string', 'max:255'],
             'role' => ['sometimes', 'string', 'in:admin,salesperson,customer'],
         ];
     }
@@ -41,6 +42,7 @@ class RegisterRequest extends BaseRequest
             'password.min' => 'La contraseña debe tener al menos 8 caracteres',
             'password.confirmed' => 'La confirmación de la contraseña no coincide',
             'phone.max' => 'El teléfono no debe exceder los 20 caracteres',
+            'address.max' => 'La dirección no debe exceder los 255 caracteres',
             'role.in' => 'El rol seleccionado no es válido',
         ];
     }

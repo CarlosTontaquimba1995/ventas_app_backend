@@ -38,7 +38,7 @@ class AuthService
             $role = 'customer';
         }
         
-        $user = $this->userRepository->create([
+        $userData = [
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
@@ -47,7 +47,9 @@ class AuthService
             'role' => $role,
             'email_verification_token' => Str::random(60),
             'is_active' => false,
-        ]);
+        ];
+
+        $user = $this->userRepository->create($userData);
 
         // In a production environment, you might want to queue the email
         // Mail::to($user->email)->queue(new EmailVerificationMail($user));

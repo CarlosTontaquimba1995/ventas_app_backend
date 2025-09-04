@@ -20,8 +20,8 @@ return new class extends Migration
             $table->string('email_verification_token', 100)->nullable();
             $table->string('password');
             $table->string('phone')->nullable();
-            $table->json('address')->nullable();
-            $table->rememberToFken();
+            $table->string('address', 100)->nullable();
+            $table->rememberToken();
             $table->timestamp('last_login_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
