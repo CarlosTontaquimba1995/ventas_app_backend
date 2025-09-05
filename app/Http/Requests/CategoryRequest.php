@@ -34,6 +34,22 @@ class CategoryRequest extends FormRequest
             'description' => 'nullable|string',
             'image' => 'nullable|string|max:255',
             'is_active' => 'boolean',
+            'parent_id' => [
+                'nullable',
+                'exists:categories,id',
+                function ($attribute, $value, $fail) use ($categoryId) {
+                    if ($categoryId && $categoryId == $value) {
+                        $fail('A category cannot be its own parent.');
+                    }
+                },
+            ],
+            'order' => 'nullable|integer|min:0',
+            'children' => 'nullable|array',
+            'children.*.name' => 'required|string|max:255',
+            'children.*.description' => 'nullable|string',
+            'children.*.image' => 'nullable|string|max:255',
+            'children.*.is_active' => 'boolean',
+            'children.*.order' => 'nullable|integer|min:0',
         ];
     }
 

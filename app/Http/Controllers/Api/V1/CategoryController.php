@@ -22,33 +22,129 @@ class CategoryController extends Controller
 
     /**
      * Display a listing of the categories.
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $categories = $this->categoryService->getAllActiveCategories();
-        return response()->json([
+        $parentId = $request->query('parent_id', null);
+        $includeChildren = $request->boolean('include_children', false);
+        
+        if ($parentId === null) {
+            // Get root categories (categories without parent)
+            $categories = $this->categoryService->getRootCategories();
+        } else {
+            // Get categories by parent_id
+            $categories = $this->categoryService->getCategoriesByParent($parentId);
+        }
+        
+        $response = [
             'success' => true,
             'data' => CategoryResource::collection($categories)
-        ]);
+        ];
+        
+        if ($includeChildren && $parentId !== null) {
+            $response['children'] = CategoryResource::collection(
+                $this->categoryService->getCategoryWithChildren($parentId)
+            );
+        }
+        
+        return response()->json($response);
+    }
+    
+    /**
+     * Get a category with its children hierarchy.
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function showWithChildren($id): JsonResponse
+    {
+        try {
+            $category = $this->categoryService->getCategoryWithChildren($id);
+            return response()->json([
+                'success' => true,
+                'data' => new CategoryResource($category)
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Category not found.'
+            ], 404);
+        }
     }
 
     /**
      * Store a newly created category in storage.
+     * 
+     * Example request body for creating a category with children:
+     * {
+     *     "name": "Beverages",
+     *     "description": "All types of drinks",
+     *     "is_active": true,
+     *     "order": 1,
+     *     "children": [
+     *         {
+     *             "name": "Alcoholic",
+     *             "description": "Alcoholic beverages",
+     *             "is_active": true,
+     *             "order": 1,
+     *             "children": [
+     *                 {
+     *                     "name": "Beer",
+     *                     "is_active": true,
+     *                     "order": 1
+     *                 },
+     *                 {
+     *                     "name": "Wine",
+     *                     "is_active": true,
+     *                     "order": 2
+     *                 }
+     *             ]
+     *         },
+     *         {
+     *             "name": "Non-Alcoholic",
+     *             "description": "Non-alcoholic beverages",
+     *             "is_active": true,
+     *             "order": 2,
+     *             "children": [
+     *                 {
+     *                     "name": "Water",
+     *                     "is_active": true,
+     *                     "order": 1
+     *                 },
+     *                 {
+     *                     "name": "Soda",
+     *                     "is_active": true,
+     *                     "order": 2
+     *                 }
+     *             ]
+     *         }
+     *     ]
+     * }
      */
     public function store(CategoryRequest $request): JsonResponse
     {
         try {
             $validated = $request->validated();
-            $category = $this->categoryService->createCategory($validated);
+            
+            // Check if we have children to create
+            $hasChildren = !empty($validated['children']);
+            
+            // Create the category with its children if they exist
+            $category = $this->categoryService->createCategory($validated, $hasChildren);
+            
             return response()->json([
                 'success' => true,
-                'data' => new CategoryResource($category),
-                'message' => 'Category created successfully.'
+                'data' => new CategoryResource($category->load('children')),
+                'message' => 'Category ' . ($hasChildren ? 'and its subcategories ' : '') . 'created successfully.'
             ], 201);
+            
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create category',
+                'message' => 'Failed to create category' . (isset($hasChildren) && $hasChildren ? ' and/or its subcategories' : ''),
                 'error' => $e->getMessage(),
             ], 500);
         }

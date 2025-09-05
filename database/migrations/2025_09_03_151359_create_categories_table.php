@@ -19,6 +19,11 @@ return new class extends Migration
             $table->string('image')->nullable();
             $table->boolean('is_active')->default(true);
             $table->integer('order')->default(0);
+            $table->unsignedBigInteger('parent_id')->nullable();
+            $table->foreign('parent_id')
+                  ->references('id')
+                  ->on('categories')
+                  ->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
         });

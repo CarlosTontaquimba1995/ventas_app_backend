@@ -19,8 +19,12 @@ interface CategoryServiceInterface
 
     /**
      * Create a new category
+     * 
+     * @param array $data Category data including optional 'children' array for nested categories
+     * @param bool $withChildren Whether to create child categories if they exist in the data
+     * @return Category
      */
-    public function createCategory(array $data): Category;
+    public function createCategory(array $data, bool $withChildren = false): Category;
 
     /**
      * Update a category
@@ -41,4 +45,19 @@ interface CategoryServiceInterface
      * Get category by slug
      */
     public function getCategoryBySlug(string $slug): ?Category;
+
+    /**
+     * Get root categories (categories without parent)
+     */
+    public function getRootCategories(): Collection;
+
+    /**
+     * Get categories by parent ID
+     */
+    public function getCategoriesByParent(?int $parentId): Collection;
+
+    /**
+     * Get category with its children hierarchy
+     */
+    public function getCategoryWithChildren(int $id): ?Category;
 }

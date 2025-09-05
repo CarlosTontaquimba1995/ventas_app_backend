@@ -55,6 +55,9 @@ Route::group([], function () {
                 Route::get('/', [V1CategoryController::class, 'index']);
                 Route::get('/{id}', [V1CategoryController::class, 'show']);
                 Route::get('/slug/{slug}', [V1CategoryController::class, 'getBySlug']);
+                // Get category with children
+                Route::get('categories/{id}/children', [V1CategoryController::class, 'showWithChildren'])
+                    ->name('categories.children');
             });
 
             // Write routes - only for admin
@@ -97,13 +100,6 @@ Route::group([], function () {
                 Route::post('/apply', [V1DiscountController::class, 'apply']);
                 Route::delete('/remove/{order}', [V1DiscountController::class, 'remove']);
             });
-        });
-
-        // Admin routes (only for admin role)
-        Route::middleware('role:admin')->prefix('admin')->group(function () {
-            // Example admin routes
-            // Route::apiResource('users', UserController::class);
-            // Route::apiResource('products', ProductController::class);
         });
 
         // Salesperson routes (only for salesperson role)
