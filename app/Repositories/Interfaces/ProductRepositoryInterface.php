@@ -30,7 +30,9 @@ interface ProductRepositoryInterface extends BaseRepositoryInterface
     public function updateStock(int $productId, int $quantity, bool $increment = false): bool;
     
     public function getActiveProducts(array $columns = ['*'], array $relations = []): Collection;
-    
+
+    public function findActiveById(int $id): ?Product;
+
     public function getByStatus(bool $isActive, int $perPage = 10): LengthAwarePaginator;
     
     public function getLowStockProducts(int $minStock = 5, int $perPage = 10): LengthAwarePaginator;

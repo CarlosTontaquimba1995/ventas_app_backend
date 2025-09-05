@@ -1,9 +1,10 @@
 <?php
 
-use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
-use App\Http\Controllers\Api\V1\DiscountController;
-use App\Http\Controllers\Api\CartItemController;
+use App\Http\Controllers\Api\V1\CartController as V1CartController;
+use App\Http\Controllers\Api\V1\CartItemController as V1CartItemController;
+use App\Http\Controllers\Api\V1\CategoryController as V1CategoryController;
+use App\Http\Controllers\Api\V1\DiscountController as V1DiscountController;
 use Illuminate\Support\Facades\Route;
 
 // Simple test route to verify API is working
@@ -51,16 +52,16 @@ Route::group([], function () {
         Route::middleware('jwt.verify')->prefix('categories')->group(function () {
             // Read routes - only for customers
             Route::middleware('role:customer')->group(function () {
-                Route::get('/', [CategoryController::class, 'index']);
-                Route::get('/{id}', [CategoryController::class, 'show']);
-                Route::get('/slug/{slug}', [CategoryController::class, 'getBySlug']);
+                Route::get('/', [V1CategoryController::class, 'index']);
+                Route::get('/{id}', [V1CategoryController::class, 'show']);
+                Route::get('/slug/{slug}', [V1CategoryController::class, 'getBySlug']);
             });
 
             // Write routes - only for admin
             Route::middleware('role:admin')->group(function () {
-                Route::post('/', [CategoryController::class, 'store']);
-                Route::put('/{id}', [CategoryController::class, 'update']);
-                Route::delete('/{id}', [CategoryController::class, 'destroy']);
+                Route::post('/', [V1CategoryController::class, 'store']);
+                Route::put('/{id}', [V1CategoryController::class, 'update']);
+                Route::delete('/{id}', [V1CategoryController::class, 'destroy']);
             });
         });
 
@@ -69,16 +70,16 @@ Route::group([], function () {
 
             // Read routes - only for customers
             Route::middleware('role:customer')->group(function () {
-                Route::get('/items', [CartItemController::class, 'index']);
-                Route::get('/summary', [CartItemController::class, 'getCartSummary']);
+                Route::get('/items', [V1CartItemController::class, 'index']);
+                Route::get('/summary', [V1CartItemController::class, 'getCartSummary']);
             });
 
             // Write routes - only for admin
             Route::middleware('role:admin')->group(function () {
-                Route::post('/items', [CartItemController::class, 'store']);
-                Route::put('/items/{id}', [CartItemController::class, 'update']);
-                Route::delete('/items/{id}', [CartItemController::class, 'destroy']);
-                Route::post('/bulk-update', [CartItemController::class, 'bulkUpdate']);
+                Route::post('/items', [V1CartItemController::class, 'store']);
+                Route::put('/items/{id}', [V1CartItemController::class, 'update']);
+                Route::delete('/items/{id}', [V1CartItemController::class, 'destroy']);
+                Route::post('/bulk-update', [V1CartItemController::class, 'bulkUpdate']);
             });
         });
 
@@ -87,14 +88,14 @@ Route::group([], function () {
 
             // Read routes - only for customers
             Route::middleware('role:customer')->group(function () {
-                Route::get('/', [DiscountController::class, 'index']);
+                Route::get('/', [V1DiscountController::class, 'index']);
             });
 
             // Write routes - only for admin
             Route::middleware('role:admin')->group(function () {
-                Route::post('/validate', [DiscountController::class, 'validateCode']);
-                Route::post('/apply', [DiscountController::class, 'apply']);
-                Route::delete('/remove/{order}', [DiscountController::class, 'remove']);
+                Route::post('/validate', [V1DiscountController::class, 'validateCode']);
+                Route::post('/apply', [V1DiscountController::class, 'apply']);
+                Route::delete('/remove/{order}', [V1DiscountController::class, 'remove']);
             });
         });
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\DiscountRequest;
 use App\Http\Resources\OfferResource;
 use App\Models\Offer;
 use App\Models\User;
@@ -10,7 +11,6 @@ use App\Repositories\Interfaces\OfferRepositoryInterface;
 use App\Services\DiscountService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class DiscountController extends Controller
 {
@@ -47,14 +47,11 @@ class DiscountController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function validateCode(Request $request): JsonResponse
+    public function validateCode(DiscountRequest $request): JsonResponse
     {
-        $request->validate([
-            'code' => 'required|string|max:50',
-        ]);
-
-$user = auth('api')->user();
-        $result = $this->discountService->validateOfferCode($request->code, $user);
+        $validated = $request->validated();
+        $user = $this->user;
+        $result = $this->discountService->validateOfferCode($validated['code'], $user);
 
         if (!$result['valid']) {
             return response()->json([
@@ -76,15 +73,11 @@ $user = auth('api')->user();
      * @param Request $request
      * @return JsonResponse
      */
-    public function apply(Request $request): JsonResponse
+    public function apply(DiscountRequest $request): JsonResponse
     {
-        $request->validate([
-            'order_id' => 'required|exists:orders,id',
-            'offer_code' => 'nullable|string|max:50',
-        ]);
-
-        $user = $request->user();
-        $order = $user->orders()->findOrFail($request->order_id);
+        $validated = $request->validated();
+        $user = $this->user;
+        $order = $user->orders()->findOrFail($validated['order_id']);
 
         // Check if the order is eligible for discounts
         if ($order->status !== 'pending') {
@@ -96,7 +89,7 @@ $user = auth('api')->user();
 
         $result = $this->discountService->applyBestDiscount(
             $order,
-            $request->offer_code
+            $validated['offer_code'] ?? null
         );
 
         // Update the order with the discount

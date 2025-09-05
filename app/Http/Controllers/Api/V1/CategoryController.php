@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Services\Interfaces\CategoryServiceInterface;
 use Illuminate\Http\JsonResponse;
@@ -34,25 +35,11 @@ class CategoryController extends Controller
     /**
      * Store a newly created category in storage.
      */
-    public function store(Request $request): JsonResponse
+    public function store(CategoryRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:categories,name',
-            'description' => 'nullable|string',
-            'image' => 'nullable|string',
-            'is_active' => 'boolean',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
         try {
-            $category = $this->categoryService->createCategory($request->all());
+            $validated = $request->validated();
+            $category = $this->categoryService->createCategory($validated);
             return response()->json([
                 'success' => true,
                 'data' => new CategoryResource($category),

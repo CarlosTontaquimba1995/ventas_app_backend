@@ -48,6 +48,13 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             ->with(['category', 'images'])
             ->first();
     }
+    
+    public function findActiveById(int $id): ?Product
+    {
+        return $this->model->active()
+            ->with(['category', 'images'])
+            ->find($id);
+    }
 
     public function search(string $query, int $perPage = 10): LengthAwarePaginator
     {

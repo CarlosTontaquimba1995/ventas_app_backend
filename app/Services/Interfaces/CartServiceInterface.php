@@ -8,8 +8,9 @@ interface CartServiceInterface
 {
     /**
      * Add an item to the cart
+     * @throws \Exception When product is not found or inactive
      */
-    public function addItemToCart(int $cartId, Product $product, int $quantity = 1);
+    public function addItemToCart(int $cartId, int $productId, int $quantity = 1);
 
     /**
      * Get cart total

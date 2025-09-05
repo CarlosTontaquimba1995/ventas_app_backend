@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Product;
 use App\Repositories\Interfaces\CartItemRepositoryInterface;
 use App\Repositories\Interfaces\CartRepositoryInterface;
+use App\Repositories\Interfaces\ProductRepositoryInterface;
 use App\Services\Interfaces\CartServiceInterface;
 use Illuminate\Support\Facades\App;
 
@@ -12,19 +13,32 @@ class CartService implements CartServiceInterface
 {
     protected $cartRepository;
     protected $cartItemRepository;
+    protected $productRepository;
 
     public function __construct(
         CartRepositoryInterface $cartRepository,
-        CartItemRepositoryInterface $cartItemRepository
+        CartItemRepositoryInterface $cartItemRepository,
+        ProductRepositoryInterface $productRepository
     ) {
         $this->cartRepository = $cartRepository;
         $this->cartItemRepository = $cartItemRepository;
+        $this->productRepository = $productRepository;
     }
 
-    public function addItemToCart(int $cartId, Product $product, int $quantity = 1)
+    public function addItemToCart(int $cartId, int $productId, int $quantity = 1)
     {
+        $product = $this->productRepository->findActiveById($productId);
+        
+        if (!$product) {
+            throw new \Exception('Product not found or inactive');
+        }
+        
+        if ($product->stock_quantity < $quantity) {
+            throw new \Exception('Insufficient stock available');
+        }
+
         // Check if item already exists in cart
-        $existingItem = $this->cartItemRepository->getCartItem($cartId, $product->id);
+        $existingItem = $this->cartItemRepository->getCartItem($cartId, $productId);
 
         if ($existingItem) {
             // Update quantity if item exists
@@ -38,7 +52,7 @@ class CartService implements CartServiceInterface
         // Create new cart item
         return $this->cartItemRepository->create([
             'cart_id' => $cartId,
-            'product_id' => $product->id,
+            'product_id' => $productId,
             'quantity' => $quantity,
             'price' => $product->final_price,
         ]);
