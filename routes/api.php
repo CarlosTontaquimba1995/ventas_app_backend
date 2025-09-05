@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\DiscountController;
 use App\Http\Controllers\Api\CartItemController;
@@ -46,22 +47,55 @@ Route::group([], function () {
             Route::get('/me', [AuthController::class, 'me']);
         });
 
-        // Cart routes (accessible by customers and salespersons)
-        Route::middleware('role:customer,salesperson')->prefix('cart')->group(function () {
-            Route::get('/items', [CartItemController::class, 'index']);
-            Route::post('/items', [CartItemController::class, 'store']);
-            Route::put('/items/{id}', [CartItemController::class, 'update']);
-            Route::delete('/items/{id}', [CartItemController::class, 'destroy']);
-            Route::get('/summary', [CartItemController::class, 'getCartSummary']);
-            Route::post('/bulk-update', [CartItemController::class, 'bulkUpdate']);
+        // Category routes with role-based access control
+        Route::middleware('jwt.verify')->prefix('categories')->group(function () {
+            // Read routes - only for customers
+            Route::middleware('role:customer')->group(function () {
+                Route::get('/', [CategoryController::class, 'index']);
+                Route::get('/{id}', [CategoryController::class, 'show']);
+                Route::get('/slug/{slug}', [CategoryController::class, 'getBySlug']);
+            });
+
+            // Write routes - only for admin
+            Route::middleware('role:admin')->group(function () {
+                Route::post('/', [CategoryController::class, 'store']);
+                Route::put('/{id}', [CategoryController::class, 'update']);
+                Route::delete('/{id}', [CategoryController::class, 'destroy']);
+            });
         });
 
-        // Discount routes (accessible by customers and salespersons)
-        Route::middleware('role:customer,salesperson')->prefix('discounts')->group(function () {
-            Route::get('/', [DiscountController::class, 'index']);
-            Route::post('/validate', [DiscountController::class, 'validateCode']);
-            Route::post('/apply', [DiscountController::class, 'apply']);
-            Route::delete('/remove/{order}', [DiscountController::class, 'remove']);
+        // Cart routes with role-based access control
+        Route::middleware('jwt.verify')->prefix('cart')->group(function () {
+
+            // Read routes - only for customers
+            Route::middleware('role:customer')->group(function () {
+                Route::get('/items', [CartItemController::class, 'index']);
+                Route::get('/summary', [CartItemController::class, 'getCartSummary']);
+            });
+
+            // Write routes - only for admin
+            Route::middleware('role:admin')->group(function () {
+                Route::post('/items', [CartItemController::class, 'store']);
+                Route::put('/items/{id}', [CartItemController::class, 'update']);
+                Route::delete('/items/{id}', [CartItemController::class, 'destroy']);
+                Route::post('/bulk-update', [CartItemController::class, 'bulkUpdate']);
+            });
+        });
+
+        // Discount routes with role-based access control
+        Route::middleware('jwt.verify')->prefix('discounts')->group(function () {
+
+            // Read routes - only for customers
+            Route::middleware('role:customer')->group(function () {
+                Route::get('/', [DiscountController::class, 'index']);
+            });
+
+            // Write routes - only for admin
+            Route::middleware('role:admin')->group(function () {
+                Route::post('/validate', [DiscountController::class, 'validateCode']);
+                Route::post('/apply', [DiscountController::class, 'apply']);
+                Route::delete('/remove/{order}', [DiscountController::class, 'remove']);
+            });
         });
 
         // Admin routes (only for admin role)
