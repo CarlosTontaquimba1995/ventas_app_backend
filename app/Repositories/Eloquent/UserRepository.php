@@ -54,6 +54,14 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
             ->first();
     }
     
+    public function findByRefreshToken(string $token): ?User
+    {
+        // The token is already hashed when stored in the database
+        return $this->model->where('refresh_token', $token)
+            ->where('refresh_token_expires_at', '>', now())
+            ->first();
+    }
+    
     public function updateVerificationToken(int $userId, ?string $token, bool $isActive = false): bool
     {
         return $this->update($userId, [

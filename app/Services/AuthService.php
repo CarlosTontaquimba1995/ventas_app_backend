@@ -9,8 +9,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
+use App\Services\Interfaces\AuthServiceInterface;
 
-class AuthService
+class AuthService implements AuthServiceInterface
 {
     protected $userRepository;
 
@@ -85,12 +86,28 @@ class AuthService
                 throw new \Exception('Please verify your email address before logging in.');
             }
 
-            // Return the token and user data
+            // Generate refresh token
+            $refreshToken = $this->createRefreshToken($user);
+            // Get fresh user data with the updated refresh token
+            $user = $this->userRepository->findById($user->id);
+
+            // Return the tokens and user data
             return [
                 'access_token' => $token,
                 'token_type' => 'bearer',
                 'expires_in' => config('jwt.ttl') * 60, // Convert minutes to seconds
-                'user' => $user
+                'refresh_token' => $refreshToken,
+                'refresh_token_expires_in' => config('jwt.refresh_ttl') * 60,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                    'phone' => $user->phone,
+                    'is_active' => (bool)$user->is_active,
+                    'refresh_token' => $user->refresh_token,
+                    'refresh_token_expires_at' => $user->refresh_token_expires_at
+                ]
             ];
         } catch (\Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
             Log::error('Token expired', ['error' => $e->getMessage()]);
@@ -190,11 +207,15 @@ class AuthService
     {
         $user = JWTAuth::user();
         
+        // Create refresh token and get fresh user data
+        $refreshToken = $this->createRefreshToken($user);
+        $user = $this->userRepository->findById($user->id);
+        
         return [
             'access_token' => $token,
             'token_type' => 'bearer',
             'expires_in' => JWTAuth::factory()->getTTL() * 60,
-            'refresh_token' => $this->createRefreshToken($user),
+            'refresh_token' => $refreshToken,
             'refresh_token_expires_in' => config('jwt.refresh_ttl') * 60,
             'user' => [
                 'id' => $user->id,
@@ -202,12 +223,14 @@ class AuthService
                 'email' => $user->email,
                 'role' => $user->role,
                 'phone' => $user->phone,
-                'is_active' => (bool)$user->is_active
+                'is_active' => (bool)$user->is_active,
+                'refresh_token' => $user->refresh_token,
+                'refresh_token_expires_at' => $user->refresh_token_expires_at
             ]
         ];
     }
 
-    protected function createRefreshToken(User $user): string
+    public function createRefreshToken(User $user): string
     {
         $refreshToken = Str::random(80);
         
@@ -218,5 +241,11 @@ class AuthService
         );
         
         return $refreshToken;
+    }
+
+    public function getUserByRefreshToken(string $token): ?User
+    {
+        $hashedToken = hash('sha256', $token);
+        return $this->userRepository->findByRefreshToken($hashedToken);
     }
 }

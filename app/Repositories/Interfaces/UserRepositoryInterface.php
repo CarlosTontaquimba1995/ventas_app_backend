@@ -17,6 +17,8 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
     
     public function findByResetToken(string $token): ?User;
     
+    public function findByRefreshToken(string $token): ?User;
+    
     public function search(string $query, int $perPage = 10): LengthAwarePaginator;
     
     /**

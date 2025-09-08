@@ -38,6 +38,9 @@ Route::group([], function () {
         Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
         Route::post('/reset-password', [AuthController::class, 'resetPassword']);
         Route::get('/verify-email/{token}', [AuthController::class, 'verifyEmail']);
+
+        // Refresh token route (public, doesn't require authentication)
+        Route::post('/refresh', [AuthController::class, 'refresh']);
     });
 
     // Protected routes (require authentication)
@@ -45,7 +48,6 @@ Route::group([], function () {
         // Common authenticated user routes (all roles)
         Route::prefix('auth')->group(function () {
             Route::post('/logout', [AuthController::class, 'logout']);
-            Route::post('/refresh', [AuthController::class, 'refresh']);
             Route::get('/me', [AuthController::class, 'me']);
         });
 

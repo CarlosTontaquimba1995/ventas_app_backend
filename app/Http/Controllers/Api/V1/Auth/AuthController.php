@@ -48,6 +48,7 @@ class AuthController extends ApiController
         }
     }
 
+
     /**
      * Register a new user.
      *
@@ -97,15 +98,39 @@ class AuthController extends ApiController
     /**
      * Refresh a token.
      *
+     * @param Request $request
      * @return JsonResponse
      */
-    public function refresh(): JsonResponse
+    public function refresh(Request $request): JsonResponse
     {
         try {
-            $newToken = $this->authService->refresh();
-            return $this->success($newToken, 'Token refreshed successfully');
+            $refreshToken = $request->input('refresh_token');
+
+            if (!$refreshToken) {
+                return $this->error('Refresh token is required', 400);
+            }
+
+            // Verify the refresh token
+            $user = $this->authService->getUserByRefreshToken($refreshToken);
+
+            if (!$user) {
+                return $this->error('Invalid refresh token', 401);
+            }
+
+            // Generate new tokens
+            $token = auth('api')->login($user);
+            $newRefreshToken = $this->authService->createRefreshToken($user);
+
+            return $this->success([
+                'access_token' => $token,
+                'token_type' => 'bearer',
+                'expires_in' => config('jwt.ttl') * 60,
+                'refresh_token' => $newRefreshToken,
+                'refresh_token_expires_in' => config('jwt.refresh_ttl') * 60,
+                'user' => $user
+            ], 'Token refreshed successfully');
         } catch (\Exception $e) {
-            return $this->error($e->getMessage(), 401);
+            return $this->error('Could not refresh token: ' . $e->getMessage(), 401);
         }
     }
 
