@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\CartController as V1CartController;
 use App\Http\Controllers\Api\V1\CartItemController as V1CartItemController;
 use App\Http\Controllers\Api\V1\CategoryController as V1CategoryController;
 use App\Http\Controllers\Api\V1\DiscountController as V1DiscountController;
+use App\Http\Controllers\Api\V1\ProductController as V1ProductController;
 use Illuminate\Support\Facades\Route;
 
 // Simple test route to verify API is working
@@ -54,9 +55,12 @@ Route::group([], function () {
             Route::middleware('role:customer')->group(function () {
                 Route::get('/', [V1CategoryController::class, 'index']);
                 Route::get('/{id}', [V1CategoryController::class, 'show']);
+                Route::get('/{id}/products', [V1ProductController::class, 'getByCategory']);
                 Route::get('/slug/{slug}', [V1CategoryController::class, 'getBySlug']);
-                // Get category with children
-                Route::get('categories/{id}/children', [V1CategoryController::class, 'showWithChildren'])
+                // Get category with hierarchy and products
+                Route::get('/{id}/hierarchy', [V1CategoryController::class, 'showWithHierarchy']);
+                // Get category with children (deprecated)
+                Route::get('{id}/children', [V1CategoryController::class, 'showWithChildren'])
                     ->name('categories.children');
             });
 
@@ -107,6 +111,23 @@ Route::group([], function () {
             // Example salesperson routes
             // Route::get('/customers', [SalesController::class, 'getCustomers']);
             // Route::post('/orders', [SalesController::class, 'createOrder']);
+        });
+
+        // Product routes with role-based access control
+        Route::middleware('jwt.verify')->prefix('products')->group(function () {
+            // Public product routes (no auth required)
+            Route::get('/', [V1ProductController::class, 'index']);
+            Route::get('/featured', [V1ProductController::class, 'featured']);
+            Route::get('/new-arrivals', [V1ProductController::class, 'newArrivals']);
+            Route::get('/search', [V1ProductController::class, 'search']);
+            Route::get('/{id}', [V1ProductController::class, 'show']);
+
+            // Admin-only product routes
+            Route::middleware('role:admin')->group(function () {
+                Route::post('/', [V1ProductController::class, 'store']);
+                Route::put('/{id}', [V1ProductController::class, 'update']);
+                Route::delete('/{id}', [V1ProductController::class, 'destroy']);
+            });
         });
 
         // Customer routes (only for customer role)

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Services\Interfaces\CategoryServiceInterface;
+use App\Services\Interfaces\ProductServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -14,10 +15,14 @@ use Illuminate\Support\Facades\Validator;
 class CategoryController extends Controller
 {
     protected CategoryServiceInterface $categoryService;
+    protected ProductServiceInterface $productService;
 
-    public function __construct(CategoryServiceInterface $categoryService)
-    {
+    public function __construct(
+        CategoryServiceInterface $categoryService,
+        ProductServiceInterface $productService
+    ) {
         $this->categoryService = $categoryService;
+        $this->productService = $productService;
     }
 
     /**
@@ -58,6 +63,80 @@ class CategoryController extends Controller
      *
      * @param int $id
      * @return JsonResponse
+     */
+    /**
+     * Get category with children hierarchy and products
+     * 
+     * @param int $id Category ID
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function showWithHierarchy($id, Request $request): JsonResponse
+    {
+        try {
+            $category = $this->categoryService->getCategoryWithChildren($id);
+            
+            if (!$category) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Category not found.'
+                ], 404);
+            }
+            
+            $perPage = $request->input('per_page', 10);
+            $page = $request->input('page', 1);
+            
+            // Get products for the current category
+            $products = $this->productService->getByCategory($id, $perPage, $page);
+            
+            // Build the response structure
+            $response = $this->buildCategoryHierarchy($category);
+            
+            // Add products to the response
+            $response['products'] = $products;
+            
+            return response()->json([
+                'success' => true,
+                'data' => $response
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve category hierarchy.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Recursively build category hierarchy with products
+     */
+    protected function buildCategoryHierarchy($category, $level = 0)
+    {
+        $result = [
+            'id' => $category->id,
+            'name' => $category->name,
+            'slug' => $category->slug,
+            'description' => $category->description,
+            'order' => $category->order,
+            'is_active' => (bool)$category->is_active,
+            'level' => $level,
+            'children' => []
+        ];
+        
+        // Add children recursively
+        if ($category->children && $category->children->isNotEmpty()) {
+            foreach ($category->children as $child) {
+                $result['children'][] = $this->buildCategoryHierarchy($child, $level + 1);
+            }
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * @deprecated Use showWithHierarchy instead
      */
     public function showWithChildren($id): JsonResponse
     {

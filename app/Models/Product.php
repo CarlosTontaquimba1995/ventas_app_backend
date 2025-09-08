@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -24,10 +23,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property \Illuminate\Support\Carbon $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
  * @property-read \App\Models\Category $category
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ProductImage[] $images
  * @property-read string $final_price
  * @property-read bool $in_stock
- * @property-read \App\Models\ProductImage|null $main_image
  */
 class Product extends Model
 {
@@ -56,23 +53,12 @@ class Product extends Model
 
     protected $appends = [
         'final_price',
-        'in_stock',
-        'main_image'
+        'in_stock'
     ];
 
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
-    }
-
-    public function images(): HasMany
-    {
-        return $this->hasMany(ProductImage::class);
-    }
-
-    public function getMainImageAttribute(): ?ProductImage
-    {
-        return $this->images->where('is_primary', true)->first() ?? $this->images->first();
     }
 
     public function getFinalPriceAttribute(): float

@@ -3,7 +3,6 @@
 namespace App\Repositories\Eloquent;
 
 use App\Models\Product;
-use App\Models\ProductImage;
 use App\Repositories\Interfaces\ProductRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -28,7 +27,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     {
         return $this->model->active()
             ->where('is_featured', true)
-            ->with(['category', 'images'])
+            ->with('category')
             ->limit($limit)
             ->get();
     }
@@ -36,7 +35,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     public function getNewArrivals(int $limit = 5): \Illuminate\Database\Eloquent\Collection
     {
         return $this->model->active()
-            ->with(['category', 'images'])
+            ->with('category')
             ->latest()
             ->limit($limit)
             ->get();
@@ -45,49 +44,48 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     public function getBySlug(string $slug): ?Product
     {
         return $this->model->where('slug', $slug)
-            ->with(['category', 'images'])
+            ->with('category')
             ->first();
     }
     
     public function findActiveById(int $id): ?Product
     {
         return $this->model->active()
-            ->with(['category', 'images'])
+            ->with('category')
             ->find($id);
     }
 
-    public function search(string $query, int $perPage = 10): LengthAwarePaginator
+    public function search(string $query, int $perPage = 10, string $sortBy = 'created_at', string $sortOrder = 'desc', int $page = 1): LengthAwarePaginator
     {
-        return $this->model->where('name', 'like', "%{$query}%")
-            ->orWhere('description', 'like', "%{$query}%")
-            ->with(['category', 'images'])
-            ->active()
-            ->paginate($perPage);
+        return $this->model->query()
+            ->with('category')
+            ->where(function ($q) use ($query) {
+                $q->where('name', 'ilike', "%{$query}%")
+                    ->orWhere('description', 'ilike', "%{$query}%")
+                    ->orWhere('sku', 'ilike', "%{$query}%");
+            })
+            ->orderBy($sortBy, $sortOrder)
+            ->paginate($perPage, ['*'], 'page', $page);
     }
 
-    public function getByCategory(int $categoryId, int $perPage = 10): LengthAwarePaginator
+    public function getByCategory(int $categoryId, int $perPage = 10, string $sortBy = 'name', string $sortOrder = 'asc', int $page = 1): LengthAwarePaginator
     {
-        return $this->model->where('category_id', $categoryId)
-            ->with(['category', 'images'])
-            ->active()
-            ->paginate($perPage);
+        return $this->model->query()
+            ->with('category')
+            ->where('category_id', $categoryId)
+            ->orderBy($sortBy, $sortOrder)
+            ->paginate($perPage, ['*'], 'page', $page);
     }
 
     public function getRelatedProducts(Product $product, int $limit = 4): Collection
     {
-        return $this->model->where('category_id', $product->category_id)
+        return $this->model->query()
+            ->with('category')
+            ->where('category_id', $product->category_id)
             ->where('id', '!=', $product->id)
-            ->with(['category', 'images'])
-            ->active()
+            ->inRandomOrder()
             ->limit($limit)
             ->get();
-    }
-    
-    public function getMainImage(Product $product)
-    {
-        return $product->images()
-            ->where('is_primary', true)
-            ->first() ?? $product->images()->first();
     }
     
     public function getFinalPrice(Product $product): float
@@ -128,7 +126,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     {
         return $this->model
             ->where('is_active', $isActive)
-            ->with(['category', 'images'])
+            ->with('category')
             ->latest()
             ->paginate($perPage);
     }
@@ -138,7 +136,7 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
         return $this->model
             ->where('stock', '<=', $minStock)
             ->where('stock', '>', 0) // Only include products with some stock
-            ->with(['category', 'images'])
+            ->with('category')
             ->orderBy('stock', 'asc')
             ->paginate($perPage);
     }
@@ -151,9 +149,6 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
         }
         
         try {
-            // Delete associated images
-            $product->images()->delete();
-            
             // Delete the product
             return (bool) $product->delete();
         } catch (\Exception $e) {

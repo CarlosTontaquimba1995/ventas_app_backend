@@ -9,7 +9,6 @@ use App\Repositories\Eloquent\CategoryRepository;
 use App\Repositories\Eloquent\OfferRepository;
 use App\Repositories\Eloquent\OrderItemRepository;
 use App\Repositories\Eloquent\OrderRepository;
-use App\Repositories\Eloquent\ProductImageRepository;
 use App\Repositories\Eloquent\ProductRepository;
 use App\Repositories\Eloquent\UserRepository;
 use App\Repositories\Interfaces\BaseRepositoryInterface;
@@ -19,7 +18,6 @@ use App\Repositories\Interfaces\CategoryRepositoryInterface;
 use App\Repositories\Interfaces\OfferRepositoryInterface;
 use App\Repositories\Interfaces\OrderItemRepositoryInterface;
 use App\Repositories\Interfaces\OrderRepositoryInterface;
-use App\Repositories\Interfaces\ProductImageRepositoryInterface;
 use App\Repositories\Interfaces\ProductRepositoryInterface;
 use App\Repositories\Interfaces\UserRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
@@ -74,12 +72,7 @@ class RepositoryServiceProvider extends ServiceProvider
             OrderItemRepository::class
         );
 
-        $this->app->bind(
-            ProductImageRepositoryInterface::class,
-            ProductImageRepository::class
-        );
-
-        $this->app->bind(
+$this->app->bind(
             OfferRepositoryInterface::class,
             OfferRepository::class
         );

@@ -10,7 +10,6 @@ use App\Services\OfferService;
 use App\Services\OrderService;
 use App\Services\OrderItemService;
 use App\Services\ProductService;
-use App\Services\ProductImageService;
 use App\Services\UserService;
 use App\Services\CartItemService;
 use App\Services\Interfaces\CartServiceInterface;
@@ -19,7 +18,6 @@ use App\Services\Interfaces\OfferServiceInterface;
 use App\Services\Interfaces\OrderServiceInterface;
 use App\Services\Interfaces\OrderItemServiceInterface;
 use App\Services\Interfaces\ProductServiceInterface;
-use App\Services\Interfaces\ProductImageServiceInterface;
 use App\Services\Interfaces\UserServiceInterface;
 use App\Services\Interfaces\CartItemServiceInterface;
 use Illuminate\Support\ServiceProvider;
@@ -91,15 +89,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ProductServiceInterface::class, function ($app) {
             return new ProductService(
                 $app->make('App\Repositories\Interfaces\ProductRepositoryInterface'),
-                $app->make('App\Repositories\Interfaces\CategoryRepositoryInterface'),
-                $app->make('App\Repositories\Interfaces\ProductImageRepositoryInterface')
-            );
-        });
-
-        $this->app->bind(ProductImageServiceInterface::class, function ($app) {
-            return new ProductImageService(
-                $app->make('App\Repositories\Interfaces\ProductImageRepositoryInterface'),
-                $app->make('App\Repositories\Interfaces\ProductRepositoryInterface')
+                $app->make('App\Repositories\Interfaces\CategoryRepositoryInterface')
             );
         });
 

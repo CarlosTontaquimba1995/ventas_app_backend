@@ -23,8 +23,6 @@ interface ProductRepositoryInterface extends BaseRepositoryInterface
     
     public function getRelatedProducts(Product $product, int $limit = 4): Collection;
     
-    public function getMainImage(Product $product);
-    
     public function getFinalPrice(Product $product): float;
     
     public function updateStock(int $productId, int $quantity, bool $increment = false): bool;

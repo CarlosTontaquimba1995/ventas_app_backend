@@ -5,19 +5,21 @@ namespace App\Services;
 use App\Models\Product;
 use App\Repositories\Interfaces\ProductRepositoryInterface;
 use App\Services\Interfaces\ProductServiceInterface;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Str;
 
 class ProductService extends BaseService implements ProductServiceInterface
 {
     protected $productRepository;
+    protected $categoryRepository;
 
-    public function __construct(ProductRepositoryInterface $productRepository)
-    {
+    public function __construct(
+        ProductRepositoryInterface $productRepository,
+        $categoryRepository = null
+    ) {
         $this->productRepository = $productRepository;
+        $this->categoryRepository = $categoryRepository;
     }
 
     public function getFeatured(int $limit = 5): Collection
@@ -40,9 +42,9 @@ class ProductService extends BaseService implements ProductServiceInterface
         return $this->productRepository->search($query, $perPage);
     }
 
-    public function getByCategory(int $categoryId, int $perPage = 10): LengthAwarePaginator
+    public function getByCategory(int $categoryId, int $perPage = 10, int $page = 1): LengthAwarePaginator
     {
-        return $this->productRepository->getByCategory($categoryId, $perPage);
+        return $this->productRepository->getByCategory($categoryId, $perPage, 'id', 'asc', $page);
     }
 
     public function getRelatedProducts(Product $product, int $limit = 4): Collection
@@ -67,37 +69,9 @@ class ProductService extends BaseService implements ProductServiceInterface
         return $this->productRepository->update($id, $data);
     }
 
-    public function uploadProductImage(Product $product, UploadedFile $file, bool $isPrimary = false): string
-    {
-        $path = $file->store('products/' . $product->id, 'public');
-        
-        // Create product image record
-        $product->images()->create([
-            'image_path' => $path,
-            'is_primary' => $isPrimary,
-            'sort_order' => $product->images()->count() + 1
-        ]);
-        
-        return $path;
-    }
-    
     public function deleteProduct(int $id): bool
     {
-        $product = $this->getProductById($id);
-        if (!$product) {
-            return false;
-        }
-        
-        try {
-            // Delete associated images from storage
-            foreach ($product->images as $image) {
-                Storage::disk('public')->delete($image->image_path);
-            }
-            
-            return $this->productRepository->deleteById($id);
-        } catch (\Exception $e) {
-            return false;
-        }
+        return $this->productRepository->deleteById($id);
     }
     
     public function getProductById(int $id): ?Product
@@ -151,18 +125,12 @@ class ProductService extends BaseService implements ProductServiceInterface
     protected function generateSlug(string $name): string
     {
         $slug = Str::slug($name);
-        $originalSlug = $slug;
-        $count = 1;
-        
-        while ($this->productRepository->getBySlug($slug)) {
-            $slug = $originalSlug . '-' . $count++;
-        }
-        
-        return $slug;
+        $count = Product::where('slug', 'LIKE', "{$slug}%")->count();
+        return $count ? "{$slug}-{$count}" : $slug;
     }
-
+    
     protected function generateSku(): string
     {
-        return 'SKU-' . strtoupper(Str::random(8)) . '-' . time();
+        return 'SKU-' . strtoupper(Str::random(8));
     }
 }

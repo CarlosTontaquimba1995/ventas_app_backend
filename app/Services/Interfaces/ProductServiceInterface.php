@@ -3,7 +3,6 @@
 namespace App\Services\Interfaces;
 
 use App\Models\Product;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -17,15 +16,13 @@ interface ProductServiceInterface
     
     public function search(string $query, int $perPage = 10): LengthAwarePaginator;
     
-    public function getByCategory(int $categoryId, int $perPage = 10): LengthAwarePaginator;
+    public function getByCategory(int $categoryId, int $perPage = 10, int $page = 1): LengthAwarePaginator;
     
     public function getRelatedProducts(Product $product, int $limit = 4): Collection;
     
     public function createProduct(array $data): Product;
     
     public function updateProduct(int $id, array $data): bool;
-    
-    public function uploadProductImage(Product $product, UploadedFile $file, bool $isPrimary = false): string;
     
     public function updateProductInventory(int $productId, int $quantity, string $action = 'add'): bool;
     
