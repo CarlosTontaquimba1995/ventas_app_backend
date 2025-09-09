@@ -185,4 +185,21 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             ->orderBy('created_at', 'desc')
             ->paginate($perPage, ['*'], 'page', $page);
     }
+    
+    /**
+     * Create multiple products in bulk
+     *
+     * @param array $productsData
+     * @return array
+     */
+    public function createBulk(array $productsData): array
+    {
+        $createdProducts = [];
+        
+        foreach ($productsData as $productData) {
+            $createdProducts[] = $this->model->create($productData);
+        }
+        
+        return $createdProducts;
+    }
 }

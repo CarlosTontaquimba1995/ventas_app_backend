@@ -40,7 +40,8 @@ class Product extends Model
         'stock',
         'sku',
         'is_active',
-        'is_featured'
+        'is_featured',
+        'specifications'
     ];
 
     protected $casts = [
@@ -49,6 +50,7 @@ class Product extends Model
         'stock' => 'integer',
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
+        'specifications' => 'array',
     ];
 
     protected $appends = [

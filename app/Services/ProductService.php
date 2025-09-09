@@ -123,6 +123,35 @@ class ProductService extends BaseService implements ProductServiceInterface
     {
         return $this->productRepository->getPaginatedByCategory($categoryId, $perPage, $page);
     }
+    
+    /**
+     * Create multiple products in bulk
+     *
+     * @param array $productsData
+     * @return Collection
+     */
+    public function bulkCreate(array $productsData): Collection
+    {
+        // Prepare the products data
+        $preparedProducts = array_map(function ($productData) {
+            // Generate slug from name if not provided
+            if (!isset($productData['slug'])) {
+                $productData['slug'] = Str::slug($productData['name']);
+            }
+            
+            // Convert specifications to JSON if it's an array
+            if (isset($productData['specifications']) && is_array($productData['specifications'])) {
+                $productData['specifications'] = json_encode($productData['specifications']);
+            }
+            
+            return $productData;
+        }, $productsData);
+        
+        // Use the repository's bulk create method
+        $products = $this->productRepository->createBulk($preparedProducts);
+        
+        return collect($products);
+    }
 
     public function updateProductInventory(int $productId, int $quantity, string $action = 'add'): bool
     {

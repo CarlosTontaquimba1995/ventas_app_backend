@@ -128,6 +128,7 @@ Route::group([], function () {
             // Admin-only product routes
             Route::middleware('role:admin')->group(function () {
                 Route::post('/', [V1ProductController::class, 'store']);
+                Route::post('/bulk', [V1ProductController::class, 'bulkStore']);
                 Route::put('/{id}', [V1ProductController::class, 'update']);
                 Route::delete('/{id}', [V1ProductController::class, 'destroy']);
             });

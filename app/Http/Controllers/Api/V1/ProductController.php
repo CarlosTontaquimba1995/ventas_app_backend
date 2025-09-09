@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
+use App\Http\Requests\BulkCreateProductRequest;
 use App\Models\Product;
 use App\Services\Interfaces\ProductServiceInterface;
 use Illuminate\Http\Request;
@@ -150,15 +151,39 @@ class ProductController extends Controller
     /**
      * Display the specified product.
      */
-    public function show(int $id): JsonResponse
+    public function show($id): JsonResponse
     {
-        $product = $this->productService->getProductById($id);
-        
+        $product = $this->productService->findActiveById($id);
+
         if (!$product) {
             return response()->json(['message' => 'Product not found'], 404);
         }
 
-        return response()->json($product);
+        return response()->json(new ProductResource($product));
+    }
+
+    /**
+     * Store multiple products in storage.
+     *
+     * @param  \App\Http\Requests\BulkCreateProductRequest  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function bulkStore(BulkCreateProductRequest $request): JsonResponse
+    {
+        try {
+            $products = $this->productService->bulkCreate($request->products);
+            
+            return response()->json([
+                'message' => 'Products created successfully',
+                'data' => ProductResource::collection($products),
+                'count' => count($products)
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to create products',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

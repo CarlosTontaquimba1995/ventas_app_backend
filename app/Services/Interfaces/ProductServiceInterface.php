@@ -48,6 +48,14 @@ interface ProductServiceInterface
     public function getPaginatedProductsWithCategory(int $perPage = 15, int $page = 1): LengthAwarePaginator;
     
     /**
+     * Create multiple products in bulk
+     *
+     * @param array $productsData
+     * @return Collection
+     */
+    public function bulkCreate(array $productsData): Collection;
+    
+    /**
      * Get paginated products by category ID
      *
      * @param int $categoryId

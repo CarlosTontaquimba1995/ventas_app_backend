@@ -54,5 +54,13 @@ interface ProductRepositoryInterface extends BaseRepositoryInterface
      */
     public function getPaginatedByCategory(int $categoryId, int $perPage = 15, int $page = 1): LengthAwarePaginator;
     
+    /**
+     * Create multiple products in bulk
+     *
+     * @param array $productsData
+     * @return array
+     */
+    public function createBulk(array $productsData): array;
+    
     public function deleteById(int $id): bool;
 }
