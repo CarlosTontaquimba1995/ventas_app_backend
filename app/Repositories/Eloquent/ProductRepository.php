@@ -155,4 +155,34 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
             return false;
         }
     }
+    
+    /**
+     * Get paginated products with category relationship
+     *
+     * @param int $perPage
+     * @param int $page
+     * @return \Illuminate\Pagination\LengthAwarePaginator
+     */
+    public function getPaginatedWithCategory(int $perPage = 15, int $page = 1): LengthAwarePaginator
+    {
+        return $this->model->with(['category'])
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage, ['*'], 'page', $page);
+    }
+    
+    /**
+     * Get paginated products by category ID
+     *
+     * @param int $categoryId
+     * @param int $perPage
+     * @param int $page
+     * @return \Illuminate\Pagination\LengthAwarePaginator
+     */
+    public function getPaginatedByCategory(int $categoryId, int $perPage = 15, int $page = 1): LengthAwarePaginator
+    {
+        return $this->model->with(['category'])
+            ->where('category_id', $categoryId)
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage, ['*'], 'page', $page);
+    }
 }

@@ -98,6 +98,31 @@ class ProductService extends BaseService implements ProductServiceInterface
     {
         return $this->productRepository->getLowStockProducts($minStock, $perPage);
     }
+    
+    /**
+     * Get paginated products with category relationship
+     *
+     * @param int $perPage
+     * @param int $page
+     * @return \Illuminate\Pagination\LengthAwarePaginator
+     */
+    public function getPaginatedProductsWithCategory(int $perPage = 15, int $page = 1): LengthAwarePaginator
+    {
+        return $this->productRepository->getPaginatedWithCategory($perPage, $page);
+    }
+    
+    /**
+     * Get paginated products by category ID
+     *
+     * @param int $categoryId
+     * @param int $perPage
+     * @param int $page
+     * @return \Illuminate\Pagination\LengthAwarePaginator
+     */
+    public function getPaginatedProductsByCategory(int $categoryId, int $perPage = 15, int $page = 1): LengthAwarePaginator
+    {
+        return $this->productRepository->getPaginatedByCategory($categoryId, $perPage, $page);
+    }
 
     public function updateProductInventory(int $productId, int $quantity, string $action = 'add'): bool
     {

@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Services\Interfaces\ProductServiceInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\URL;
 
 class ProductController extends Controller
 {
@@ -22,11 +24,103 @@ class ProductController extends Controller
     /**
      * Display a listing of products.
      */
+    /**
+     * Display a paginated listing of products with the exact required format.
+     */
     public function index(Request $request): JsonResponse
     {
-        $perPage = $request->input('per_page', 10);
-        $products = $this->productService->getProductsByStatus(true, $perPage);
-        return response()->json($products);
+        $perPage = $request->input('per_page', 15);
+        $page = $request->input('page', 1);
+        
+        // Get paginated products with category relationship
+        $products = $this->productService->getPaginatedProductsWithCategory($perPage, $page);
+        
+        // Format the response to match the required structure
+        $response = [
+            'current_page' => $products->currentPage(),
+            'data' => ProductResource::collection($products->items()),
+            'first_page_url' => $products->url(1),
+            'from' => $products->firstItem(),
+            'last_page' => $products->lastPage(),
+            'last_page_url' => $products->url($products->lastPage()),
+            'links' => $this->formatPaginationLinks($products),
+            'next_page_url' => $products->nextPageUrl(),
+            'path' => URL::current(),
+            'per_page' => $products->perPage(),
+            'prev_page_url' => $products->previousPageUrl(),
+            'to' => $products->lastItem(),
+            'total' => $products->total()
+        ];
+
+        return response()->json($response);
+    }
+    
+    /**
+     * Get products by category ID with pagination
+     *
+     * @param int $categoryId
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getProductsByCategory(int $categoryId, Request $request): JsonResponse
+    {
+        $perPage = $request->input('per_page', 15);
+        $page = $request->input('page', 1);
+        
+        // Get paginated products by category
+        $products = $this->productService->getPaginatedProductsByCategory($categoryId, $perPage, $page);
+        
+        // Format the response to match the required structure
+        $response = [
+            'current_page' => $products->currentPage(),
+            'data' => ProductResource::collection($products->items()),
+            'first_page_url' => $products->url(1),
+            'from' => $products->firstItem(),
+            'last_page' => $products->lastPage(),
+            'last_page_url' => $products->url($products->lastPage()),
+            'links' => $this->formatPaginationLinks($products),
+            'next_page_url' => $products->nextPageUrl(),
+            'path' => URL::current(),
+            'per_page' => $products->perPage(),
+            'prev_page_url' => $products->previousPageUrl(),
+            'to' => $products->lastItem(),
+            'total' => $products->total()
+        ];
+
+        return response()->json($response);
+    }
+    
+    /**
+     * Format pagination links to match the required structure.
+     */
+    private function formatPaginationLinks($paginator): array
+    {
+        $links = [];
+        
+        // Previous page link
+        $links[] = [
+            'url' => $paginator->previousPageUrl(),
+            'label' => '&laquo; Previous',
+            'active' => false
+        ];
+        
+        // Page number links
+        foreach ($paginator->getUrlRange(1, $paginator->lastPage()) as $page => $url) {
+            $links[] = [
+                'url' => $url,
+                'label' => (string)$page,
+                'active' => $page == $paginator->currentPage()
+            ];
+        }
+        
+        // Next page link
+        $links[] = [
+            'url' => $paginator->nextPageUrl(),
+            'label' => 'Next &raquo;',
+            'active' => false
+        ];
+        
+        return $links;
     }
 
     /**

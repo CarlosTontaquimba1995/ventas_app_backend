@@ -123,6 +123,7 @@ Route::group([], function () {
             Route::get('/new-arrivals', [V1ProductController::class, 'newArrivals']);
             Route::get('/search', [V1ProductController::class, 'search']);
             Route::get('/{id}', [V1ProductController::class, 'show']);
+            Route::get('/category/{categoryId}', [V1ProductController::class, 'getProductsByCategory']);
 
             // Admin-only product routes
             Route::middleware('role:admin')->group(function () {

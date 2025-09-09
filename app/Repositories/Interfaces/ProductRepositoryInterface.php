@@ -35,5 +35,24 @@ interface ProductRepositoryInterface extends BaseRepositoryInterface
     
     public function getLowStockProducts(int $minStock = 5, int $perPage = 10): LengthAwarePaginator;
     
+    /**
+     * Get paginated products with category relationship
+     *
+     * @param int $perPage
+     * @param int $page
+     * @return \Illuminate\Pagination\LengthAwarePaginator
+     */
+    public function getPaginatedWithCategory(int $perPage = 15, int $page = 1): LengthAwarePaginator;
+    
+    /**
+     * Get paginated products by category ID
+     *
+     * @param int $categoryId
+     * @param int $perPage
+     * @param int $page
+     * @return \Illuminate\Pagination\LengthAwarePaginator
+     */
+    public function getPaginatedByCategory(int $categoryId, int $perPage = 15, int $page = 1): LengthAwarePaginator;
+    
     public function deleteById(int $id): bool;
 }
